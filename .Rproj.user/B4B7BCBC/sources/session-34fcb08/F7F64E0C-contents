@@ -1,0 +1,43 @@
+install.packages("httr")
+install.packages("jsonlite")
+
+library(httr)
+library(jsonlite)
+
+# Set your API key obtained from the FEC website
+fec_key <- "zcH1NS9ReajvU8zMDUmPaDkriLhLT700Yu9Bjmjx"
+
+# API endpoint for candidate financial summaries
+endpoint <- "https://api.open.fec.gov/v1/candidate/{candidate_id}/totals"
+
+# List of candidate IDs for the 2020 presidential election
+candidate_ids <- c("P00000001", "P00000002", "P00000003")  # Add more candidate IDs as needed
+
+# Create an empty data frame to store financial campaign data
+financial_data <- data.frame()
+
+# Iterate through each candidate ID
+for (candidate_id in candidate_ids) {
+  # Make API request to retrieve financial summary for the candidate
+  url <- gsub("{candidate_id}", candidate_id, endpoint)
+  response <- GET(url, query = list(api_key = fec_key))
+  
+  # Parse the JSON response
+  json <- content(response, "text")
+  candidate_summary <- fromJSON(json, flatten = TRUE)
+  
+  # Extract relevant information from the summary
+  candidate_data <- data.frame(
+    candidate_id = candidate_id,
+    candidate_name = candidate_summary$results$full_name,
+    receipts = candidate_summary$results$receipts,
+    disbursements = candidate_summary$results$disbursements,
+    cash_on_hand = candidate_summary$results$cash_on_hand
+  )
+  
+  # Append candidate data to the financial_data data frame
+  financial_data <- rbind(financial_data, candidate_data)
+}
+
+# Print the financial campaign data
+print(financial_data)
